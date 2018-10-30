@@ -17,3 +17,7 @@ The game then resets and can be played again.
 ## Interface
 
 The interface to play the game is a website powered by the web3 injection engine. It can thus be played on any (even custom) network.
+
+## Demo
+
+Demo on Rinkeby: http://4gw.rf.gd/
