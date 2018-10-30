@@ -5,6 +5,14 @@ contract FourConnect {
     address public player2;
     address owner = msg.sender;
 
+    struct Match {
+        address winner;
+        uint winnings;
+        uint nStones;
+    }
+    Match public lastMatch;
+
+
     uint public bet;
     uint public maxBet = 10 ether;
     uint public minBet = 0.001 ether;
@@ -286,15 +294,32 @@ contract FourConnect {
             playerWon();
             return;
         }
+
+        // check for a draw
+        if(nStones == 42) {
+            drawGame();
+        }
     }
 
     function playerWon() private {
         if(player1Turn) {
             player1.transfer(bet*2*payoutFactor/100);
+            lastMatch = Match(player1, bet*2*payoutFactor/100, nStones);
         } else {
             player2.transfer(bet*2*payoutFactor/100);
+            lastMatch = Match(player2, bet*2*payoutFactor/100, nStones);
         }
         resetGame();
+    }
+
+    function drawGame() private {
+        // refund money minus rake
+        if(nStones == 42) {
+            lastMatch = Match(0, bet*payoutFactor/100, nStones);
+            player1.transfer(bet*payoutFactor/100);
+            player2.transfer(bet*payoutFactor/100);
+            resetGame();
+        }
     }
 
 
