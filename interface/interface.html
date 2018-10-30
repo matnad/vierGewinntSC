@@ -202,13 +202,15 @@
 	else
 	{
 		web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
-	 }
+	}
 
-	web3.eth.defaultAccount = web3.eth.accounts[0];
+ 	web3.eth.defaultAccount = web3.eth.accounts[0];
+
 
 	var user = web3.eth.accounts[0];
 	var contract = web3.eth.contract(abiArray);
-	var c4 = contract.at('0x3f0ed288476c3f8c5544f7f88903fcdc506ca212');
+	var c4 = contract.at('0xff844b75E630D6f1cC241934F9c37AA8EE8793DD');
+
 
 
 	async function join(val) {
@@ -288,7 +290,7 @@
 	// get player 2
 	c4.player2(function(error, result){
 	  if(!error){
-	    if (result == '0x0000000000000000000000000000000000000000') {
+	    if (result == '0x0000000000000000000000000000000000000000' || result == '0x') {
 	  		$("#player2").html('Waiting for Player 2 to join the game...');
 	  		$("#priority").hide(); // hide until 2 players present
 	  	} else {
@@ -303,7 +305,7 @@
 	// get player 1
 	c4.player1(function(error, result){
 	  if(!error){
-	  	if (result == '0x0000000000000000000000000000000000000000') {
+	  	if (result == '0x0000000000000000000000000000000000000000' || result == '0x') {
 	  		$("#player1").html('No one has joined the game so far.');
 	  		$("#player2").html('');
 	  	} else {
@@ -314,6 +316,7 @@
 	 else
 	   console.error(error);
 	 });
+
 
 	// Get bet and create join button
 	c4.bet(async function(error, result){
@@ -389,18 +392,22 @@
 	       console.error(error);
 	   }
 	});
+
+	$( document ).ready(function() {
+	    $("#joinGame").css('visibility', 'visible');
+	});
+
 </script>
 </head>
 <body>
 <section class="wrapper">
 <div class="info">
 <h1 class="title">Play Connect Four!</h1>
-<h2 class="message"><span class="prefix"></span><span id="player" class="player">&nbsp;</span></h2>
-<a href="#" class="play-again" style="display: none;">Play Again</a>
-<div id="player1"></div>
+<h2 class="message">on the blockchain</span></h2>
+<div id="player1">Please enable Metamask to use this website.</div>
 <div id="player2"></div>
 <br>
-<div id="joinGame"><input type="number" id="bet" value="0.1" min="0.002" style="width: 5em"></div>
+<div id="joinGame" style="visibility: hidden"><input type="number" id="bet" value="0.1" min="0.002" style="width: 5em"></div>
 <div id="etherlog"></div>
 <br>
 <div id="priority"></div>
