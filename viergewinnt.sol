@@ -1,5 +1,5 @@
 pragma solidity ^0.4.25;
-contract CoinFlip {
+contract FourConnect {
 
     address public player1;
     address public player2;
@@ -10,7 +10,7 @@ contract CoinFlip {
     uint public minBet = 0.001 ether;
     uint8 payoutFactor = 90;
 
-    uint8[7][6] public grid;
+    uint8[6][7] grid;
     uint8 nStones;
 
     uint turnTime = 6400;
@@ -19,7 +19,8 @@ contract CoinFlip {
     bool public player1Turn;
     bool public gameRunning;
 
-    function getGrid() constant returns (uint8[7][6]) {
+
+    function getGrid() public view returns (uint8[6][7]) {
         return grid;
     }
 
@@ -91,8 +92,8 @@ contract CoinFlip {
 
         // check input
         require(
-          _col >= 1 && _col <= 7,
-          "Must enter a number between 1 and 7."
+          _col >= 0 && _col <= 6,
+          "Must enter a number between 0 and 6."
           );
 
        // check if correct player
@@ -109,41 +110,39 @@ contract CoinFlip {
         }
 
         // find row to drop stone
-        uint8 col = _col-1;
-        uint8 row = 0;
-        while (row <= 5 && grid[col][row] != 0) {
-            row++;
+        uint8 row = 5;
+        while (row >= 0 && grid[_col][row] != 0) {
+            row--;
         }
 
         // check if column has room
         require(
-          row <= 5,
+          row >= 0,
           "Selected column is full."
           );
 
         // drop correct stone
         if(player1Turn) {
-            grid[col][row] = 1;
+            grid[_col][row] = 1;
         } else {
-            grid[col][row] = 2;
+            grid[_col][row] = 2;
         }
 
         // count stones
         nStones++;
 
         // check if a player won
-        if (nStones >= 7) {
-            checkVicotryCondition(col, row);
+        if (nStones >= 1) {
+            checkVicotryCondition(_col, row);
         }
 
         // pass the turn
         switchPriority();
     }
 
-    function checkVicotryCondition(uint8 col, uint8 row) private {
+    function checkVicotryCondition(uint8 _col, uint8 _row) private {
 
-        // horizontal
-        uint8 vp = 0;
+        // horizontal grid[COL][ROW]
         uint8 p; // player
         if (player1Turn) {
             p = 1;
@@ -151,21 +150,31 @@ contract CoinFlip {
             p = 2;
         }
 
+        uint8 vp = 0;
         uint8 cp = p;
-        uint8 i = col;
+        uint8 i = _col;
         while(cp == p && i <= 6) {
             vp++;
-            cp = grid[i][row];
             i++;
+            if (i <= 6)
+                cp = grid[i][_row];
         }
+
+
+        // need to prevent uint underflow
         cp = p;
-        i = 0;
+        i = _col;
         vp--;
         while(cp == p && i >= 0) {
             vp++;
-            cp = grid[row][i];
-            i--;
+            if (i > 0) {
+                i--;
+                cp = grid[i][_row];
+            } else {
+                break;
+            }
         }
+
 
         if (vp >= 4) {
             playerWon();
@@ -173,21 +182,31 @@ contract CoinFlip {
         }
 
         // vertical
+
+        vp = 0;
         cp = p;
-        i = row;
+        i = _row;
         while(cp == p && i <= 5) {
             vp++;
-            cp = grid[col][i];
             i++;
+            if (i <= 5)
+                cp = grid[_col][i];
         }
+
+        // need to prevent uint underflow
         cp = p;
-        i = 0;
+        i = _row;
         vp--;
         while(cp == p && i >= 0) {
             vp++;
-            cp = grid[row][i];
-            i--;
+            if (i > 0) {
+                i--;
+                cp = grid[_col][i];
+            } else {
+                break;
+            }
         }
+
 
         if (vp >= 4) {
             playerWon();
@@ -195,22 +214,28 @@ contract CoinFlip {
         }
 
         // diagonal1
+        vp = 0;
         cp = p;
-        i = row;
-        uint8 j = col;
+        i = _row;
+        uint8 j = _col;
         while(cp == p && i <= 5 && j <= 6) {
-            vp++;
-            cp = grid[j][i];
-            i++; j++;
+            vp++; i++; j++;
+            if (i <= 5 && j <= 6)
+                cp = grid[j][i];
         }
+
         cp = p;
-        i = row;
-        j = col;
+        i = _row;
+        j = _col;
         vp--;
         while(cp == p && i >= 0 && j >= 0) {
             vp++;
-            cp = grid[j][i];
-            i--; j--;
+            if(i > 0 && j > 0) {
+                i--; j--;
+                cp = grid[j][i];
+            } else {
+                break;
+            }
         }
 
         if (vp >= 4) {
@@ -219,36 +244,55 @@ contract CoinFlip {
         }
 
         // diagonal2
+        vp = 0;
         cp = p;
-        i = row;
-        j = col;
+        i = _row;
+        j = _col;
         while(cp == p && i <= 5 && j >= 0) {
             vp++;
+            if (j > 0)
+                j--;
+            else
+                break;
+
+            if (i < 5)
+                i++;
+            else
+                break;
+
             cp = grid[j][i];
-            i++; j--;
         }
+
         cp = p;
-        i = row;
-        j = col;
+        i = _row;
+        j = _col;
         vp--;
         while(cp == p && i >= 0 && j <= 6) {
             vp++;
+            if (j < 6)
+                j++;
+            else
+                break;
+
+            if (i > 0)
+                i--;
+            else
+                break;
+
             cp = grid[j][i];
-            i--; j++;
         }
 
         if (vp >= 4) {
             playerWon();
             return;
         }
-
     }
 
     function playerWon() private {
         if(player1Turn) {
             player1.transfer(bet*2*payoutFactor/100);
         } else {
-            player1.transfer(bet*2*payoutFactor/100);
+            player2.transfer(bet*2*payoutFactor/100);
         }
         resetGame();
     }
@@ -282,5 +326,4 @@ contract CoinFlip {
             owner.transfer(address(this).balance);
         }
     }
-
 }
