@@ -104,6 +104,20 @@
 	{
 		"constant": true,
 		"inputs": [],
+		"name": "lastBlock",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
 		"name": "lastMatch",
 		"outputs": [
 			{
@@ -116,7 +130,7 @@
 			},
 			{
 				"name": "nStones",
-				"type": "uint256"
+				"type": "int8"
 			}
 		],
 		"payable": false,
@@ -145,6 +159,20 @@
 			{
 				"name": "",
 				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "nStones",
+		"outputs": [
+			{
+				"name": "",
+				"type": "int8"
 			}
 		],
 		"payable": false,
@@ -192,6 +220,20 @@
 		"payable": false,
 		"stateMutability": "view",
 		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "turnTime",
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
 	}
 ];
 
@@ -209,27 +251,32 @@
 
 	var user = web3.eth.accounts[0];
 	var contract = web3.eth.contract(abiArray);
-	var c4 = contract.at('0xff844b75E630D6f1cC241934F9c37AA8EE8793DD');
+	var c4 = contract.at('0x3a6c5d040294fbb2e11389964ddc0b4763a0f314');
 
 
 
+	/** Try to join the game with a specific bet.
+	  * val of -1 will read the text field on the website and use that value
+	  * @param val: has to be -1 or a positive integer. If positive it must be in WEI!
+	  */
 	async function join(val) {
 		if (val == -1) {
 			val = $("#bet").val()*1e18;
 		}
-		c4.join({value: val, gas: 800000},function(error, result){
+		c4.join({value: val},function(error, result){
 		  if(!error){
-		    console.log(result);
+		    //console.log(result);
 		    }
 		 else
 		   console.error(error);
 		 });
 	}
 
+	// try to play a stone in the specified column
 	async function playStone(col) {
 		c4.setStone(col,function(error, result){
 		  if(!error){
-		    console.log(result);
+		    //console.log(result);
 		    }
 		 else
 		   console.error(error);
@@ -241,11 +288,11 @@
 	  let promise = new Promise((resolve, reject) => {
 	    c4.gameRunning(function(error, result){
 		  if(!error){
-		  	console.log(result);
-		  	resolve(result);
+			  	//console.log(result);
+			  	resolve(result);
 		    } else {
-		   	console.error(error);
-		   	reject(error);
+			   	console.error(error);
+			   	reject(error);
 			}
 		 });
 	  });
@@ -259,11 +306,11 @@
 	  let promise = new Promise((resolve, reject) => {
 	    c4.player1Turn(function(error, result){
 		  if(!error){
-		  	console.log(result);
-		  	resolve(result);
+			  	//console.log(result);
+			  	resolve(result);
 		    } else {
-		   	console.error(error);
-		   	reject(error);
+			   	console.error(error);
+			   	reject(error);
 			}
 		 });
 	  });
@@ -272,50 +319,175 @@
 	  return result;
 	}
 
-	// Show current turn
-	c4.player1Turn(async function(error, result){
+	// helper function to display timespan
+	function secondsTimeSpanToHMS(s) {
+	    var h = Math.floor(s/3600); //Get whole hours
+	    s -= h*3600;
+	    var m = Math.floor(s/60); //Get remaining minutes
+	    s -= m*60;
+	    return h+":"+(m < 10 ? '0'+m : m)+":"+(s < 10 ? '0'+s : s); //zero padding on minutes and seconds
+	}
+
+	// try to play a stone in the specified column
+	async function endGame() {
+		c4.endGame(function(error, result){
+		  if(!error){
+		    console.log("EndGame: " +result);
+		    }
+		 else
+		   console.error(error);
+		 });
+	}
+
+
+	/**
+	  * EXECUTION STARTS HERE
+	  */
+
+    /** Ajax loop to refresh on state change for 30 minutes
+	 *	All state changes are handeled by the contract with the variable nStones
+	 *  -3 = Game inactive
+	 *  -2 = Player 1 joined
+	 *  -1 = Player 2 joined
+	 *   0 = Game initialized
+	 *  1+ = Number of Stones played
+	 * This function will check nStones every <interval/1000> seconds and refresh the page if a state change is detected.
+	 * After <duration> seconds the refreshing will stop to not hog resources. Any refresh will restart the timer.
+	 */
+	var duration = 1000*60*30,
+    interval = 1500,
+    xhrPending = true,
+    intervalTimer,
+    nStones;
+
+    // Get the initial value of nStones and then release the pending variable
+    c4.nStones(function(error, result){
 	   if(!error) {
-	   		var p1t = await player1Turn();
-	   		if (p1t) {
-	   			$("#priority").html("Next move: <font color=\"red\">Player 1.</font>");
-	   		} else {
-	   			$("#priority").html("Next move: <font color=\"blue\">Player 2.</font>");
-	   		}
+	   		nStones = result;
+	   		xhrPending = false;
 	   }
 	   else {
 	       console.error(error);
 	   }
 	});
 
-	// get player 2
-	c4.player2(function(error, result){
-	  if(!error){
-	    if (result == '0x0000000000000000000000000000000000000000' || result == '0x') {
-	  		$("#player2").html('Waiting for Player 2 to join the game...');
-	  		$("#priority").hide(); // hide until 2 players present
-	  	} else {
-	  		$("#player2").html('<font color=\"blue\">Player2: '+result+'</font>');
-	    	console.log(result);
-		}
-	    }
-	 else
-	   console.error(error);
-	 });
+    // Continuously check nStones to detect a difference. This will only start once the initial function successfully completed.
+    // It will also only fire if the previous request is done, otherwise it will skip an update and wait for the previous request.
+	intervalTimer = setInterval(function() {
+	    if (xhrPending) return;
+	    c4.nStones(async function(error, result){
+		   if(!error) {
+		   		//console.log("chck stones:"+nStones);
+		   		console.log("chck result: "+result);
+		   		if (parseInt(result,10) != parseInt(nStones,10)) {
+		   			location.reload();
+		   			//console.log("reload");
+		   		}
+		   		xhrPending = false;
+		   }
+		   else {
+		       console.error(error);
+		   }
+		});
 
-	// get player 1
-	c4.player1(function(error, result){
-	  if(!error){
-	  	if (result == '0x0000000000000000000000000000000000000000' || result == '0x') {
-	  		$("#player1").html('No one has joined the game so far.');
-	  		$("#player2").html('');
-	  	} else {
-	  		$("#player1").html('<font color="red">Player1: '+result+'</font>');
-	    	console.log(result);
-		}
-	    }
-	 else
-	   console.error(error);
-	 });
+    	xhrPending = true;
+	}, interval);
+
+	setTimeout(function() {
+	    clearInterval(intervalTimer);
+	}, duration);
+
+
+	// Show current turn and time left, load players and check more time stuff
+	// Stacked to allow all in one pass
+	c4.player1Turn(async function(error, result){
+	   if(!error) {
+	   		var p1t = await player1Turn();
+	   		if (p1t) {
+	   			$("#priority").html("Next move: <font color=\"red\">Player 1. </font>");
+	   		} else {
+	   			$("#priority").html("Next move: <font color=\"blue\">Player 2. </font>");
+	   		}
+
+	   		var lastBlock,
+	   		currentBlock,
+	   		turnTime;
+
+   			c4.lastBlock(function(error, result){
+			   if(!error) {
+			   		console.log("lastBlock: "+result)
+			   		lastBlock = parseInt(result,10);
+			   		c4.turnTime(function(error, result){
+					   if(!error) {
+					   		console.log("turnTime: "+result)
+					   		turnTime = parseInt(result,10);
+					   		web3.eth.getBlockNumber(function(error, result){
+							    if(!error) {
+							   		console.log("current block :" +result);
+							   		currentBlock = parseInt(result,10);
+							   		var timeRemaining = (lastBlock+turnTime)-currentBlock;
+									console.log("time remaining: "+timeRemaining);
+									if (timeRemaining > 0) {
+										$("#priority").append("Time remaining: "+timeRemaining+" blocks (~"+secondsTimeSpanToHMS(timeRemaining*15)+").")
+									} else {
+										$("#priority").append("Time has run out ("+timeRemaining+" blocks)! ");
+										var endGameLink = "javascript:endGame();";
+										if (p1t)
+											$("#priority").append("<a href='"+endGameLink+"' >Click here to end the game and declare Player 2 the winner.</a>");
+										else
+											$("#priority").append("<a href='"+endGameLink+"' >Click here to end the game and declare Player 1 the winner.</a>");
+
+									}
+
+									// get player 2 and then 1 (stacked to make sure they resolve in sequence)
+									c4.player2(function(error, result){
+									  if(!error){
+									    if (result == '0x0000000000000000000000000000000000000000' || result == '0x') {
+									  		$("#player2").html('Waiting for Player 2 to join the game...');
+									  		$("#priority").hide(); // hide until 2 players present
+									  		if (timeRemaining <= 0) {
+								  				$("#player2").append(" The waiting time of "+turnTime+" blocks is expired ("+timeRemaining+" blocks). You can still join, or <a href='"+endGameLink+"'>cancel the game and refund Player 1.</a>");
+									  		}
+									  	} else {
+									  		$("#player2").html('<font color=\"blue\">Player2: '+result+'</font>');
+										}
+										c4.player1(function(error, result){
+										  if(!error){
+										  	if (result == '0x0000000000000000000000000000000000000000' || result == '0x') {
+										  		$("#player1").html('No one has joined the game so far.');
+										  		$("#player2").html('');
+										  	} else {
+										  		$("#player1").html('<font color="red">Player1: '+result+'</font>');
+											}
+										    }
+										 else
+										   console.error(error);
+										 });
+									 }
+									 else
+									   console.error(error);
+									 });
+
+							    }
+							    else {
+							       console.error(error);
+							    }
+					   		});
+					   }
+					   else {
+					       console.error(error);
+					   }
+					});
+			   }
+			   else {
+			       console.error(error);
+			   }
+			});
+	   }
+	   else {
+	       console.error(error);
+	   }
+	});
 
 
 	// Get bet and create join button
@@ -326,7 +498,7 @@
 	   			$("#joinGame").html("Game is currently running. The players each bet "+result/1e18+" ETH on this match.")
 	   			return;
 	   		} else {
-	   			console.log("resbet: "+result);
+	   			//console.log("resbet: "+result);
 		       if (result == 0) {
 		       	$("#joinGame").append("&nbsp;&nbsp;&nbsp;<a href='javascript:join(-1);'>Enter your bet <strong>IN ETH</strong> and start a new game!<a>");
 		       } else {
@@ -379,9 +551,10 @@
 	   }
 	});
 
+	// read results of last match and display if any are found
 	c4.lastMatch(function(error, result){
 	   if(!error) {
-	   		console.log(result);
+	   		//console.log(result);
 	   		if (result[2] == 42) {
 	   			$("#lastMatch").html("Last Match was a draw. Each player won "+result[1]/1e18+".");
 	   		} else if(result[2] > 0) {

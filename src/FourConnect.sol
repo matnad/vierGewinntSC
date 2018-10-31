@@ -8,7 +8,7 @@ contract FourConnect {
     struct Match {
         address winner;
         uint winnings;
-        uint nStones;
+        int8 nStones;
     }
     Match public lastMatch;
 
@@ -19,10 +19,10 @@ contract FourConnect {
     uint8 payoutFactor = 90;
 
     uint8[6][7] grid;
-    uint8 nStones;
+    int8 public nStones = -3;
 
-    uint turnTime = 6400;
-    uint lastBlock;
+    uint public turnTime = 5760; // 5760 blocks ~ 24h
+    uint public lastBlock;
 
     bool public player1Turn;
     bool public gameRunning;
@@ -59,6 +59,7 @@ contract FourConnect {
         player1 = msg.sender;
         bet = msg.value;
         lastBlock = block.number;
+        nStones++;
         return;
     } else {
     require(
@@ -66,6 +67,7 @@ contract FourConnect {
       "Your bet must match the current bet of player 1 exactly."
     );
       player2 = msg.sender;
+      nStones++;
     }
 
     // check if both players are successfully added and start game
@@ -81,6 +83,7 @@ contract FourConnect {
         gameRunning = true;
         player1Turn = true;
         lastBlock = block.number;
+        nStones = 0;
     }
 
     function resetGame() private {
@@ -88,7 +91,7 @@ contract FourConnect {
         player2 = address(0);
         delete(grid);
         bet = 0;
-        nStones = 0;
+        nStones = -3;
         gameRunning = false;
     }
 
@@ -302,6 +305,7 @@ contract FourConnect {
     }
 
     function playerWon() private {
+        // needs some security checks?
         if(player1Turn) {
             player1.transfer(bet*2*payoutFactor/100);
             lastMatch = Match(player1, bet*2*payoutFactor/100, nStones);
@@ -329,14 +333,28 @@ contract FourConnect {
     }
 
     function endGame() public {
-        if (gameRunning == true && (block.number - lastBlock) > turnTime) {
-            if(player1Turn) {
-                player2.transfer(bet*2*payoutFactor/100);
-            } else {
-                player1.transfer(bet*2*payoutFactor/100);
-            }
-            resetGame();
-        } else if (gameRunning == false && player1 != address(0) && (block.number - lastBlock) > turnTime) {
+        if (gameRunning == true) {
+            require(
+                block.number - lastBlock > turnTime,
+                "Time needs to be expired."
+            );
+            // The nonactive player wins due to timeout
+            switchPriority();
+            playerWon();
+        } else if (gameRunning == false) {
+            // Will give a full refund if game has not yet started (no one joined player 1)
+            require(
+                player1 != address(0),
+                "There needs to be at least 1 player registered."
+            );
+            require(
+                block.number - lastBlock > turnTime,
+                "Time needs to be expired."
+            );
+            require(
+                bet > 0,
+                "Can't refund; there needs to be a bet."
+            );
             player1.transfer(bet);
             resetGame();
         }
