@@ -27,6 +27,20 @@ contract FourConnect {
     bool public player1Turn;
     bool public gameRunning;
 
+    modifier onlyActivePlayer {
+       if (player1Turn) {
+           require(
+               msg.sender == player1,
+               "It's player 1's turn."
+           );
+        } else {
+           require(
+               msg.sender == player2,
+               "It's player 2's turn."
+           );
+        }
+        _;
+    }
 
     function getGrid() public view returns (uint8[6][7]) {
         return grid;
@@ -95,7 +109,7 @@ contract FourConnect {
         gameRunning = false;
     }
 
-    function setStone(uint8 _col) public {
+    function setStone(uint8 _col) onlyActivePlayer public {
         // check if game running
         require(
             gameRunning == true,
@@ -106,19 +120,6 @@ contract FourConnect {
           _col >= 0 && _col <= 6,
           "Must enter a number between 0 and 6."
           );
-
-       // check if correct player
-       if (player1Turn) {
-           require(
-               msg.sender == player1,
-               "It's player 1's turn."
-           );
-        } else {
-           require(
-               msg.sender == player2,
-               "It's player 2's turn."
-           );
-        }
 
         // find row to drop stone
         uint8 row = 5;
@@ -330,6 +331,11 @@ contract FourConnect {
     function switchPriority() private {
         lastBlock = block.number;
         player1Turn = !player1Turn;
+    }
+
+    function concedeGame() onlyActivePlayer public {
+        switchPriority();
+        playerWon();
     }
 
     function endGame() public {
