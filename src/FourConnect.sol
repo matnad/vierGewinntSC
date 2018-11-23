@@ -35,11 +35,11 @@ contract FourConnect {
 
     uint public lastBlock;
 
-    // Variables to construct a random seed (set to private for production)
-    address public startCoinbase;
+    // Variables to construct a random seed
+    address private startCoinbase;
     uint public player2JoinBlockNumber;
-    bytes32 public player2JoinBlockHash;
-    uint256 public currentRandomNumber;
+    bytes32 private player2JoinBlockHash;
+    uint256 private currentRandomNumber;
 
     // DECLARATION END
     // ------------

@@ -19,34 +19,6 @@
 	var abiArray = [
 	{
 		"constant": true,
-		"inputs": [],
-		"name": "currentRandomNumber",
-		"outputs": [
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "player2JoinBlockHash",
-		"outputs": [
-			{
-				"name": "",
-				"type": "bytes32"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
 		"inputs": [
 			{
 				"name": "",
@@ -352,20 +324,6 @@
 	{
 		"constant": true,
 		"inputs": [],
-		"name": "startCoinbase",
-		"outputs": [
-			{
-				"name": "",
-				"type": "address"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
 		"name": "turnTime",
 		"outputs": [
 			{
@@ -400,7 +358,7 @@
 	var user = web3.eth.accounts[0];
 
 	var contract = web3.eth.contract(abiArray);
-	var c4 = contract.at('0x33e1f25a92c74cc9dcae67873a6b2c20c782ad43');
+	var c4 = contract.at('0xc6fcc46e9ff035b835cf3477d9d21d8c858b96c1');
 
 
 	$( function() {
