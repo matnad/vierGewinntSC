@@ -548,7 +548,7 @@
 	    c4.nStones(async function(error, result){
 		   if(!error) {
 		   		//console.log("chck stones:"+nStones);
-		   		console.log("chck result: "+result);
+		   		//console.log("chck result: "+result);
 		   		if (parseInt(result,10) != parseInt(nStones,10)) {
 		   			location.reload();
 		   			//console.log("reload");
@@ -575,7 +575,7 @@
 	   		var p1t = await player1Turn();
 	   		var nst = await checkNStones();
 	   		var player2JoinBlockNumber = await getPlayer2JoinBlockNumber();
-	   		console.log("p2jbn:"+player2JoinBlockNumber);
+	   		//console.log("p2jbn:"+player2JoinBlockNumber);
 	   		if (nst > 0) {
 		   		if (p1t) {
 		   			$("#priority").html("Next move: <font color=\"red\">Player 1. </font>");
@@ -591,18 +591,18 @@
 
    			c4.lastBlock(function(error, result){
 			   if(!error) {
-			   		console.log("lastBlock: "+result)
+			   		//console.log("lastBlock: "+result)
 			   		lastBlock = parseInt(result,10);
 			   		c4.turnTime(function(error, result){
 					   if(!error) {
-					   		console.log("turnTime: "+result)
+					   		//console.log("turnTime: "+result)
 					   		turnTime = parseInt(result,10);
 					   		web3.eth.getBlockNumber(function(error, result){
 							    if(!error) {
-							   		console.log("current block :" +result);
+							   		//console.log("current block :" +result);
 							   		currentBlock = parseInt(result,10);
 							   		var timeRemaining = (lastBlock+turnTime)-currentBlock;
-									console.log("time remaining: "+timeRemaining);
+									//console.log("time remaining: "+timeRemaining);
 									var endGameLink = "javascript:endGame();";
 
 									if (nst == -1) {
@@ -714,7 +714,8 @@
 	// Draw Grid
 	c4.getGrid(function(error, result){
 	   if(!error) {
-	   		result = result.flat();
+	   		// result = result.flat(); // flat doesnt work on some machines
+   			result = result.reduce((acc, val) => acc.concat(val), []);
 	   		var grid = new Array();
 	   		for (i=0; i<42; i++) {
 	   			grid.push(result[i]["c"][0]);
@@ -767,7 +768,7 @@
 	c4.lastMatchPointer(async function(error, result){
 		   if(!error) {
 
-		   		console.log("pointer:"+result);
+		   		//console.log("pointer:"+result);
 		   		var pointer = result;
 		   		// grab matches and enforce order
 		   		var lastMatches = new Array(5);
@@ -812,7 +813,8 @@
 		c4.getFinalGrid(id-1,function(error, result){
 		   if(!error) {
 		   		//console.log("final grid:"+result);
-   			result = result.flat();
+   			// result = result.flat(); // flat doesnt work on some machines
+   			result = result.reduce((acc, val) => acc.concat(val), []);
 	   		var grid = new Array();
 	   		for (i=0; i<42; i++) {
 	   			grid.push(result[i]["c"][0]);
