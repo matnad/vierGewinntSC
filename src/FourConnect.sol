@@ -246,8 +246,6 @@ contract FourConnect {
 
 
     function checkVicotryCondition(uint8 _col, uint8 _row) private {
-
-
         uint8 activePlayer;
         // player
         if (player1Turn)
@@ -274,9 +272,11 @@ contract FourConnect {
         currentCol = _col;
         while (currentStoneOwner == activePlayer && currentCol >= 0) {
             victoryPoints++;
-            currentCol--;
-            if (currentCol >= 0)
+            if (currentCol > 0) {
+                currentCol--;
                 currentStoneOwner = grid[currentCol][_row];
+            } else
+                break;
         }
 
         if (victoryPoints >= 4) {
@@ -297,9 +297,12 @@ contract FourConnect {
         uint8 currentRow = _row;
         while (currentStoneOwner == activePlayer && currentRow >= 0) {
             victoryPoints++;
-            currentRow--;
-            if (currentRow >= 0)
+            if (currentRow >= 0) {
+                currentRow--;
                 currentStoneOwner = grid[_col][currentRow];
+            } else
+                break;
+
         }
 
         if (victoryPoints >= 4) {
@@ -329,10 +332,13 @@ contract FourConnect {
         currentCol = _col;
         while (currentStoneOwner == activePlayer && currentRow >= 0 && currentCol >= 0) {
             victoryPoints++;
-            currentRow--;
-            currentCol--;
-            if (currentRow >= 0 && currentCol >= 0)
+
+            if (currentRow > 0 && currentCol > 0) {
+                currentRow--;
+                currentCol--;
                 currentStoneOwner = grid[currentCol][currentRow];
+            } else
+                break;
         }
 
         if (victoryPoints >= 4) {
@@ -350,10 +356,12 @@ contract FourConnect {
         currentCol = _col;
         while (currentStoneOwner == activePlayer && currentRow <= 5 && currentCol >= 0) {
             victoryPoints++;
-            currentCol--;
             currentRow++;
-            if (currentCol >= 0 && currentRow <= 5)
+            if (currentCol > 0 && currentRow <= 5) {
+                currentCol--;
                 currentStoneOwner = grid[currentCol][currentRow];
+            } else
+                break;
         }
 
         // right side
@@ -363,10 +371,12 @@ contract FourConnect {
         victoryPoints--;
         while (currentStoneOwner == activePlayer && currentRow >= 0 && currentCol <= 6) {
             victoryPoints++;
-            currentRow--;
             currentCol++;
-            if (currentRow >= 0 && currentCol <= 6)
+            if (currentRow > 0 && currentCol <= 6) {
+                currentRow--;
                 currentStoneOwner = grid[currentCol][currentRow];
+            } else
+                break;
         }
 
         if (victoryPoints >= 4) {
