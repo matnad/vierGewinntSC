@@ -26,7 +26,7 @@ contract FourConnect {
     bool public gameRunning;
 
     uint public bet;
-    uint public maxBet = 4 ether;
+    uint public maxBet = 5 ether;
     uint public minBet = 0.01 ether;
     uint8 payoutFactor = 90;
 
@@ -42,7 +42,9 @@ contract FourConnect {
     uint256 private currentRandomNumber;
 
     // DECLARATION END
+
     // ------------
+
     // MODIFIERS START
 
     modifier onlyActivePlayer {
@@ -61,23 +63,10 @@ contract FourConnect {
     }
 
     // MODIFIERS END
-    // ------------
-    // FUNCTIONS START
 
-    modifier onlyActivePlayer {
-       if (player1Turn) {
-           require(
-               msg.sender == player1,
-               "It's player 1's turn."
-           );
-        } else {
-           require(
-               msg.sender == player2,
-               "It's player 2's turn."
-           );
-        }
-        _;
-    }
+    // ------------
+
+    // FUNCTIONS START
 
     function getGrid() public view returns (uint8[6][7]) {
         return grid;
@@ -195,7 +184,7 @@ contract FourConnect {
       // Linear Congruential Generator (C++11's minstd_rand: ISO/IEC 14882:2011)
       // use randomSeed as X_0
       // X_(n+1) = a*X_n + c mod m
-      // a = 48271, c = 0, m = 2**32 (=4294967295)
+      // a = 48271, c = 0, m = 2**32-1 (=4294967295)
       currentRandomNumber = (48271 * currentRandomNumber) % 4294967295;
       return currentRandomNumber;
   }
@@ -255,154 +244,131 @@ contract FourConnect {
 
     function checkVicotryCondition(uint8 _col, uint8 _row) private {
 
-        // horizontal grid[COL][ROW]
-        uint8 p; // player
+
+        uint8 activePlayer; // player
         if (player1Turn)
-            p = 1;
+            activePlayer = 1;
         else
-            p = 2;
+            activePlayer = 2;
 
-        uint8 vp = 0;
-        uint8 cp = p;
-        uint8 i = _col;
-        while(cp == p && i <= 6) {
-            vp++;
-            i++;
-            if (i <= 6)
-                cp = grid[i][_row];
+        // horizontal check
+        int8 victoryPoints = -1; // currents stone will be counted twice, so start at -1
+
+        // right side
+        uint8 currentStoneOwner = activePlayer;
+        uint8 currentCol = _col;
+        while(currentStoneOwner == activePlayer && currentCol <= 6) {
+            victoryPoints++;
+            currentCol++;
+            if (currentCol <= 6)
+                currentStoneOwner = grid[currentCol][_row];
         }
 
-
-        // need to prevent uint underflow
-        cp = p;
-        i = _col;
-        vp--;
-        while(cp == p && i >= 0) {
-            vp++;
-            if (i > 0) {
-                i--;
-                cp = grid[i][_row];
-            } else {
-                break;
-            }
+        // left side
+        currentStoneOwner = activePlayer;
+        currentCol = _col;
+        while(currentStoneOwner == activePlayer && currentCol >= 0) {
+            victoryPoints++;
+            currentCol--;
+            if (currentCol >= 0)
+                currentStoneOwner = grid[currentCol][_row];
         }
 
-
-        if (vp >= 4) {
+        if (victoryPoints >= 4) {
             playerWon();
             return;
         }
 
-        // vertical TODO: we only need to look 1 stone up
+        // vertical check
+        victoryPoints = 0; // currents stone will be counted once, so start at 0
 
-        vp = 0;
-        cp = p;
-        i = _row;
-        while(cp == p && i <= 5) {
-            vp++;
-            i++;
-            if (i <= 5)
-                cp = grid[_col][i];
+        // upwards, special case: only look at next stone
+        if (_row <= 4 && grid[_col][_row+1] == activePlayer)
+            victoryPoints++;
+
+        // downwards
+        currentStoneOwner = activePlayer;
+        uint8 currentRow = _row;
+        while(currentStoneOwner == activePlayer && currentRow >= 0) {
+            victoryPoints++;
+            currentRow--;
+            if (currentRow >= 0)
+                currentStoneOwner = grid[_col][currentRow];
         }
 
-        // need to prevent uint underflow
-        cp = p;
-        i = _row;
-        vp--;
-        while(cp == p && i >= 0) {
-            vp++;
-            if (i > 0) {
-                i--;
-                cp = grid[_col][i];
-            } else {
-                break;
-            }
-        }
-
-
-        if (vp >= 4) {
+        if (victoryPoints >= 4) {
             playerWon();
             return;
         }
 
-        // diagonal1
-        vp = 0;
-        cp = p;
-        i = _row;
-        uint8 j = _col;
-        while(cp == p && i <= 5 && j <= 6) {
-            vp++; i++; j++;
-            if (i <= 5 && j <= 6)
-                cp = grid[j][i];
+        // check diagonal bottom left to top right
+        victoryPoints = -1; // currents stone will be counted twice, so start at -1
+
+        // right side
+        currentStoneOwner = activePlayer;
+        currentRow = _row;
+        currentCol = _col;
+        while(currentStoneOwner == activePlayer && currentRow <= 5 && currentCol <= 6) {
+            victoryPoints++;
+            currentRow++;
+            currentCol++;
+            if (currentRow <= 5 && currentCol <= 6)
+                currentStoneOwner = grid[currentCol][currentRow];
         }
 
-        cp = p;
-        i = _row;
-        j = _col;
-        vp--;
-        while(cp == p && i >= 0 && j >= 0) {
-            vp++;
-            if(i > 0 && j > 0) {
-                i--; j--;
-                cp = grid[j][i];
-            } else {
-                break;
-            }
+        //left side
+        currentStoneOwner = activePlayer;
+        currentRow = _row;
+        currentCol = _col;
+        while(currentStoneOwner == activePlayer && currentRow >= 0 && currentCol >= 0) {
+            victoryPoints++;
+            currentRow--;
+            currentCol--;
+            if(currentRow >= 0 && currentCol >= 0)
+                currentStoneOwner = grid[currentCol][currentRow];
         }
 
-        if (vp >= 4) {
+        if (victoryPoints >= 4) {
             playerWon();
             return;
         }
 
-        // diagonal2
-        vp = 0;
-        cp = p;
-        i = _row;
-        j = _col;
-        while(cp == p && i <= 5 && j >= 0) {
-            vp++;
-            if (j > 0)
-                j--;
-            else
-                break;
+        // check diagonal top left to bottom right
+        victoryPoints = -1; // currents stone will be counted twice, so start at -1
 
-            if (i < 5)
-                i++;
-            else
-                break;
-
-            cp = grid[j][i];
+        // left side
+        currentStoneOwner = activePlayer;
+        currentRow = _row;
+        currentCol = _col;
+        while(currentStoneOwner == activePlayer && currentRow <= 5 && currentCol >= 0) {
+            victoryPoints++;
+            currentCol--;
+            currentRow++;
+            if (currentCol >= 0 && currentRow <= 5)
+                currentStoneOwner = grid[currentCol][currentRow];
         }
 
-        cp = p;
-        i = _row;
-        j = _col;
-        vp--;
-        while(cp == p && i >= 0 && j <= 6) {
-            vp++;
-            if (j < 6)
-                j++;
-            else
-                break;
-
-            if (i > 0)
-                i--;
-            else
-                break;
-
-            cp = grid[j][i];
+        // right side
+        currentStoneOwner = activePlayer;
+        currentRow = _row;
+        currentCol = _col;
+        victoryPoints--;
+        while(currentStoneOwner == activePlayer && currentRow >= 0 && currentCol <= 6) {
+            victoryPoints++;
+            currentRow--;
+            currentCol++;
+            if (currentRow >= 0 && currentCol <= 6)
+                currentStoneOwner = grid[currentCol][currentRow];
         }
 
-        if (vp >= 4) {
+        if (victoryPoints >= 4) {
             playerWon();
             return;
         }
 
         // check for a draw
-        if(nStones == 42) {
+        if(nStones == 42)
             drawGame();
-        }
     }
 
     function playerWon() private {
