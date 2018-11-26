@@ -1,7 +1,7 @@
 # Rules of the game
 1. Player 1 sets the hight of the bet (between 0.001 and 1 ether).
-2. Player 2 has to match the bet of player 1. If player 2 bets too much, the difference will be sent back. Transactions with insufficient funds will be rejected. 
-3. Player 2 is obliged to start the game with a second transaction within 256 blocks after the bet of player 1 was matched. This is necessary to guarantee the randomness described in the next step. If he/she does not meet this requirement, player 1 will get his bet refunded, but player 2 will lose everything.
+2. Player 2 has to match the bet of player 1 (transactions which do not match player 1's bet, will be rejected).
+3. Player 2 is obliged to start the game with a second transaction within 240 blocks after the bet of player 1 was matched. This is necessary to guarantee the randomness described in the next step. If he/she does not meet this requirement, player 1 will get his bet refunded, but player 2 will lose everything.
 4. After player 2 started the game, the game table is shown. The game is a modified version of the well known game connect four. Because the traditional game setting is solved (i.e. there is a strategy that allows the first player to win every time), we included one stone for both players which are set randomly at the beginning of the game.[1] Additionally, it is randomly selected which player may set the first stone.
 5. The goal of the game is to connect 4 stones of the same colour in a row, column or diagonal. 
 6. The time per move is fixed and shown in the interface. If the time runs out, any address can terminate the game and declare the nonactive player the winner.
