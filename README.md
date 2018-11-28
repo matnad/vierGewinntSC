@@ -19,7 +19,7 @@ The interface to play the game is a website powered by the web3 injection engine
 
 ## Demo
 
-Demo on Rinkeby: http://4gw.rf.gd/4/
+Demos: http://4blocks.ch
 
 ## 
 
