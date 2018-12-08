@@ -8,7 +8,7 @@
 4. After player 2 started the game, the game table is shown. The game is a modified version of the well known game connect four. One stone will be placed for each player in a random position that is not in the middle column and doesn't touch a border. Additionally, the starting player is randomly determined. [2]
 5. The goal of the game is to connect 4 stones of the same colour in a row, column or diagonal. 
 6. The time per move is fixed and shown in the interface. If the time runs out, any address can terminate the game and declare the nonactive player the winner.
-7. To incentivize the loosing player to play out the game or give up instead of just choosing to time out, they will receive a part of the fees when giving up or losing. No payout is done to a player who lets the game time out.
+7. To incentivize the losing player to play out the game or give up instead of just choosing to time out, they will receive a part of the fees when giving up or losing. No payout is done to a player who lets the game time out.
 8. The winner of the game receives the bet of both players minus a fixed percentage fee which is withheld by the contract.
 
 
