@@ -2,7 +2,7 @@
 |--------------------|---------------|
 |Aljoscha Schöpfer   |2015-722-994   |
 |Jakob Roth          |2015-056-393   |
-|Matthias Nadler     |2007-743-792               |
+|Matthias Nadler     |2007-743-792   |
 |Mitchell Goldberg   |2015-051-659   |
 
 Contract deployment address: 
