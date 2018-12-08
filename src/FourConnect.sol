@@ -39,7 +39,7 @@ contract FourConnect {
 
     /* nStones is used to represent the game state.
      * -3 = Initial state, player 1 can join
-     * -2 = Player 1 joined, player 2 can joined
+     * -2 = Player 1 joined, player 2 can join
      * -1 = Both players joined, game can be started (usually by player 2)
      * 2+ = The number of stones currently on the playing grid, game is running
      * 42 = The game is a draw and ends
@@ -253,7 +253,7 @@ contract FourConnect {
 
         // check if a player won
         if (nStones >= 7) {
-            checkVicotryCondition(_col, row);
+            checkVictoryCondition(_col, row);
         }
 
         // pass the turn
@@ -261,7 +261,7 @@ contract FourConnect {
     }
 
     // checks if a specific stone has 3 other connected stones in any of the 4 directions
-    function checkVicotryCondition(uint8 _col, uint8 _row) private {
+    function checkVictoryCondition(uint8 _col, uint8 _row) private {
         uint8 activePlayer;
         if (player1Turn)
             activePlayer = 1;
@@ -436,7 +436,7 @@ contract FourConnect {
         if (nStones == 42) {
             uint orinigalBet = bet;
             bet = 0;
-            storeMatch(Match(player1, player2, orinigalBet * 2 * payoutFactor / 100, nStones));
+            storeMatch(Match(player1, player2, orinigalBet * payoutFactor / 100, nStones));
             player1.transfer(orinigalBet * payoutFactor / 100);
             player2.transfer(orinigalBet * payoutFactor / 100);
             resetGame();
@@ -504,10 +504,23 @@ contract FourConnect {
     }
 
     // Transfer all the accumulated fees to the owners account
+    // Prevent owner from withdrawing active bets!
     function withdraw() public {
-        if (msg.sender == owner) {
-            owner.transfer(address(this).balance);
-        }
+        require(
+            bet == 0,
+            "Can only withdraw funds when there is no active game."
+        );
+        require(
+            address(this).balance > 0,
+            "The balance is currently 0 ETH. Nothing to withdraw."
+        );
+        require(
+            msg.sender == owner,
+            "Only the owner can withdraw funds."
+        );
+
+        // transfer all funds to owner
+        owner.transfer(address(this).balance);
     }
 
     // FUNCTIONS END
